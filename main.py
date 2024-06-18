@@ -23,7 +23,7 @@ def index():
     return "Welcome to my Spotify App <a> href = '/login'>Login with SPotify</a>"
 
 
-app.route('/login')
+@app.route('/login')
 def login():
     scope = 'user-read-private user-read-email'
 
@@ -40,5 +40,47 @@ def login():
 
     return redirect(auth_url)
 
+@app.route('/callback')
+def callback():
+    if'error' in request.args:
+        return jsonify({"error": request.args['error']})
+    
+
+    if 'code' in requests.args:
+        req_body  = {
+            'code': requests.args['code'],
+            'grant_type' : 'authorization_Code',
+            'redirect_uri' : REDIRECT_URI,
+            'client_id' : CLIENT_ID,
+            'client_secret' : CLIENT_SECRET
+        }
+
+        response = requests.post(TOKEN_URL, data=req_body)
+        token_info = response.json()
+        
+        
+        session['access_token'] = token_info['access_token']
+        session['refresh_token'] = token_info['refresh_token']
+        session['expires_at'] = datetime.now().timestamp() + token_info['expires_in'] 
 
 
+        return redirect('/playlists')
+    
+
+@app.route('/playlists')
+
+def get_playlists():
+    if 'access_token' not in session:
+        return redirect('login')
+    
+    if datetime.now().timestamp > session['expires_at']:
+        return redirect('/refresh-token')
+    
+    headers = {
+        'Authorization' : f"Bearer {session['access_token']}"
+    }
+
+    response = requests.get(API_BASE_URL + 'me\playlists', headers=headers)
+    playlists = response.json()
+
+    return jsonify(playlists)
