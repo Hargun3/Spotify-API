@@ -20,7 +20,7 @@ API_BASE_URL = 'https://api.spotify.com/v1/'
 
 @app.route('/')
 def index():
-    return "Welcome to my Spotify App <a> href = '/login'>Login with SPotify</a>"
+    return "Welcome to my Spotify App <a href = '/login'>Login with Spotify</a>"
 
 
 @app.route('/login')
@@ -105,4 +105,11 @@ def refresh_token():
         new_token_info = response.json()
 
         session['access_token'] = new_token_info['acess_token']
-        session['expires_at'] = datetime.now().timestamp() + token_info['expires_in'] 
+        session['expires_at'] = datetime.now().timestamp() + new_token_info['expires_in'] 
+
+
+        return redirect('/playlists')
+    
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug = True)
